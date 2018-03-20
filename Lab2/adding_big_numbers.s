@@ -12,16 +12,20 @@ EXIT_SUCCESS = 0
 BUFLEN = 512
 ASCII_A = 55
 ASCII_0 = 48
+MAX_SIZE = 65
 file1: .ascii "file1.txt\0"
 file2: .ascii "file2.txt\0"
+file3: .ascii "file3.txt\0"
 
 .bss
 .comm number1, 1024
 .comm number2, 1024
-.comm endian_number1, 1024
-.comm endian_number2, 1024
-.comm sum, 1024
-
+.comm endian_number1, 512
+.comm endian_number2, 512
+.comm sum, 513
+.comm before_quad, 1026
+.comm quad_number, 2052
+.comm textout, 2052
 .text
 .global main
 main:
@@ -174,7 +178,7 @@ mov %bl, endian_number2(, %rdi, 1)
 jmp before_adding
 
 before_adding:
-mov $0, %rdi
+mov $0, %rdi	# counter
 clc
 pushfq
 jmp add_numbers
@@ -187,8 +191,71 @@ adc %rbx, %rax
 pushfq
 mov %rax, sum(, %rdi, 8)
 inc %rdi
-cmp $15, %rdi
+cmp $MAX_SIZE, %rdi
 jl add_numbers
+
+mov $0, %rdi
+mov $0, %rcx
+mov $16, %rbx
+xor %rdx, %rdx
+xor %rax, %rax
+
+div_bits:
+mov sum(, %rdi, 1), %al
+div %rbx
+mov %al, before_quad(, %rcx, 1)
+inc %rcx
+mov %dl, before_quad(, %rcx, 1)
+inc %rcx
+inc %rdi
+xor %rdx, %rdx
+cmp $513, %rdi
+jl div_bits
+
+mov $0, %rdi
+mov $0, %rcx
+mov $4, %rbx
+
+hex_to_quad:
+mov before_quad(, %rdi, 1), %al
+div %rbx
+mov %al, quad_number(, %rcx, 1)
+inc %rcx
+mov %dl, quad_number(, %rcx, 1)
+inc %rcx
+inc %rdi
+xor %rdx, %rdx
+cmp $1026, %rdi
+jl hex_to_quad
+
+mov $0, %rcx
+mov $0, %rax
+
+encode_number:
+mov quad_number(, %rcx, 1), %al
+add $ASCII_0, %al
+mov %al, textout(, %rcx, 1)
+inc %rcx
+cmp $2046, %rcx
+jl encode_number
+
+mov $SYSOPEN, %rax
+mov $file3, %rdi
+mov $FWRITE, %rsi
+mov $0, %rdx
+syscall
+
+mov %rax, %r8
+
+mov $SYSWRITE, %rax
+mov %r8, %rdi
+mov $textout, %rsi
+mov $BUFLEN, %rdx
+syscall
+
+mov $SYSCLOSE, %rax
+mov %r8, %rdi
+syscall
 
 mov $SYSEXIT, %rax
 mov $EXIT_SUCCESS, %rdi
