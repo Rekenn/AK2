@@ -118,14 +118,14 @@ mov $number2, %rsi
 mov $BUFLEN, %rdx
 syscall
 
-mov %rax, %r9
+mov %rax, %r10
 
 mov $SYSCLOSE, %rax
 mov %r8, %rdi
 syscall
 
-dec %r9
-mov %r9, %rcx 		# number length
+dec %r10
+mov %r10, %rcx 		# number length
 xor %rax, %rax	
 xor %rdx, %rdx
 mov $0, %rdi		# counter (endian_number)
@@ -193,6 +193,19 @@ mov %rax, sum(, %rdi, 8)
 inc %rdi
 cmp $MAX_SIZE, %rdi
 jl add_numbers
+
+mov $0, %rdi
+mov $127, %rsi
+
+reverse:
+mov sum(, %rdi, 1), %al
+mov sum(, %rsi, 1), %bl
+mov %al, sum(, %rsi, 1)
+mov %bl, sum(, %rdi, 1)
+inc %rdi
+dec %rsi
+cmp %rdi, %rsi
+jge reverse
 
 mov $0, %rdi
 mov $0, %rcx
