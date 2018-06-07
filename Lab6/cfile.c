@@ -7,7 +7,7 @@ void fillArray(int array[]);
 void display(int array[]);
 void add(int array[]);
 void multiply(int array[]);
-unsigned long long rdtsc(void);
+extern unsigned long long rdtsc(void);
 
 int main() {
 	int array1[SIZE];
